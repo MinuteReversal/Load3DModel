@@ -1,0 +1,18 @@
+CACHE MANIFEST
+#/*Sat, 24 Feb 2018 04:11:31 GMT*/
+favicon.ico
+images/touch-icon-ipad-retina.png
+images/touch-icon-ipad.png
+images/touch-icon-iphone-retina.png
+lib/three.js
+lib/loaders/OBJLoader.js
+lib/loaders/MTLLoader.js
+lib/touchListener.js
+models/Cocacola.mtl
+models/Cocacola.obj
+models/Cocacola.png
+index.html
+
+NETWORK:
+*
+FALLBACK:
