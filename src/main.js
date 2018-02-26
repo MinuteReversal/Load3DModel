@@ -6,6 +6,8 @@ import * as TouchListener from "/lib/touchListener.js"
 THREE.MTLLoader = MTLLoader;
 THREE.OBJLoader = OBJLoader;
 
+//zhy
+
 export default class Main {
     constructor() {
         var scene = new THREE.Scene();
