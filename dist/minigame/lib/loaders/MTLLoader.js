@@ -5,6 +5,7 @@
  */
 import * as THREE from "../three.js"
 
+
 THREE.MTLLoader = function ( manager ) {
 
 	this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
