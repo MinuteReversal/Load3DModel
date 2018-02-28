@@ -4,6 +4,36 @@
 	(factory((global.THREE = {})));
 }(this, (function (exports) { 'use strict';
 
+    var document = {
+      createElement(tagName) {
+        tagName = tagName.toLowerCase()
+        if (tagName === 'canvas') {
+          return wx.createCanvas()
+        }
+        else if (tagName === 'image') {
+          return wx.createImage()
+        }
+      },
+      createElementNS(ns, n) {
+        if (n === "img") {
+          var img = wx.createImage();
+          img.listeners = [];
+          img.addEventListener = (type, listener) => {
+            img.listeners.push({
+              type: type,
+              listener: listener
+            });
+          }
+          img.onload = (evt) => {
+            for (var i = 0, item; item = img.listeners[i]; i++) {
+              item.listener.apply(img, arguments);
+            }
+          }
+          return img;
+        }
+      }
+    }
+
 	// Polyfills
 
 	if ( Number.EPSILON === undefined ) {
