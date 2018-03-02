@@ -34,6 +34,8 @@
       }
     }
 
+    var ImageBitmap=function() { };
+
 	// Polyfills
 
 	if ( Number.EPSILON === undefined ) {

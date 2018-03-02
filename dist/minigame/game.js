@@ -1,3 +1,4 @@
 import Main from "main"
 import Box from "box"
-new Main(canvas);
+import Ui from "ui"
+new Ui(canvas);

@@ -9,14 +9,16 @@ import TouchListener from "lib/touchListener"
 THREE.FileLoader = FileLoader;
 THREE.ImageLoader = ImageLoader;
 
-export default class Main {
+export default class UI {
   constructor(canvas) {
-
+    this.render3d(canvas);
+  }
+  render3d(canvas) {
     var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 1000);
     var renderer = new THREE.WebGLRenderer({ canvas: canvas });
     renderer.setSize(innerWidth, innerHeight);
-    
+
     var ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
@@ -25,7 +27,21 @@ export default class Main {
     camera.add(pointLight);
     scene.add(camera);
 
+    // load a texture, set wrap mode to repeat
+    var texture = new THREE.CanvasTexture(this.get2dImage(), THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping);
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.repeat.set(1, 1);
+
     camera.position.z = 8;
+
+    var geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
+    var material = new THREE.MeshBasicMaterial({ transparent: true, map: texture, side: THREE.FrontSide });
+    var plane = new THREE.Mesh(geometry, material);
+    plane.position.z = 5;
+    scene.add(plane);
+
+
 
     var Cocacola = null;//global model
     var isAutoRotation = true;
@@ -41,15 +57,15 @@ export default class Main {
       var objLoader = new THREE.OBJLoader();
       objLoader.setMaterials(materials);
       objLoader.setPath('models/');
-      objLoader.load('Cocacola.obj', function (object) {
-        Cocacola = object;
-        scene.add(object);
+      objLoader.load('Cocacola.obj', function (obj) {
+        Cocacola = obj;
+        scene.add(obj);
       }, function (xhr) { }, function (xhr) { });
     });
 
     var animate = function () {
       requestAnimationFrame(animate);
-      
+
       if (touches.list.length) {
         isAutoRotation = false;
         var current = touches.list[0];
@@ -81,5 +97,30 @@ export default class Main {
       if (timer) clearTimeout(timer);
       timer = setTimeout(function () { isAutoRotation = true; }, 2000);
     });
+  }
+  render2d(canvas) {
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = "color:red;";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    var img = new Image();
+    img.onload = (evt) => {
+      ctx.drawImage(img, 0, 0);
+    };
+    img.src = this.get2dImage();
+  }
+  get2dImage() {
+    var canvas = wx.createCanvas();
+    canvas.width = 512;
+    canvas.height = 512;
+    var ctx = canvas.getContext("2d");
+    ctx.font = "32px arial";
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,0,0.7)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "red";
+    ctx.fillText("hello", 0, 32);
+    ctx.restore();
+    //return canvas.toDataURL();
+    return canvas;
   }
 }
