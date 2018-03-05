@@ -11,12 +11,56 @@ THREE.ImageLoader = ImageLoader;
 
 export default class UI {
   constructor(canvas) {
-    this.render3d(canvas);
+    var me = this;
+    var ctx = canvas.getContext("2d");
+    var canvas3d = wx.createCanvas();
+    canvas3d.width = innerWidth;
+    canvas3d.height = innerHeight;
+    me.init3d(canvas3d);
+
+    var canvas2d = wx.createCanvas();
+    canvas2d.width = innerWidth;
+    canvas2d.height = innerHeight;
+    me.init2d(canvas2d);
+
+
+    var timer = null;
+    me.touches = new TouchListener(canvas);
+    me.touchStart = { x: 0, y: 0 };
+    me.touchRotation = { x: 0, y: 0, z: 0 };
+    me.isAutoRotation = true;
+
+    var frame = function () {
+      requestAnimationFrame(frame);
+      ctx.fillRect(0, 0, innerWidth, innerHeight);
+      me.update3d();
+      ctx.drawImage(canvas3d, 0, 0);
+      me.update2d();
+      ctx.drawImage(canvas2d, 0, 0);
+    };
+    frame();
+
+    canvas.addEventListener("touchstart", (evt) => {
+      var p = evt.changedTouches[0];
+      me.touchStart.x = p.clientX;
+      me.touchStart.y = p.clientY;
+      if (me.Cocacola) {
+        me.touchRotation.x = me.Cocacola.rotation.x;
+        me.touchRotation.y = me.Cocacola.rotation.y;
+        me.touchRotation.z = me.Cocacola.rotation.z;
+      }
+    });
+
+    canvas.addEventListener("touchend", (evt) => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function () { me.isAutoRotation = true; }, 2000);
+    });
   }
-  render3d(canvas) {
-    var scene = new THREE.Scene();
-    var camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 1000);
-    var renderer = new THREE.WebGLRenderer({ canvas: canvas });
+  init3d(canvas) {
+    var me = this;
+    var scene = me.scene = new THREE.Scene();
+    var camera = me.camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 1000);
+    var renderer = me.renderer = new THREE.WebGLRenderer({ canvas: canvas });
     renderer.setSize(innerWidth, innerHeight);
 
     var ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -27,29 +71,9 @@ export default class UI {
     camera.add(pointLight);
     scene.add(camera);
 
-    // load a texture, set wrap mode to repeat
-    var texture = new THREE.CanvasTexture(this.get2dImage(), THREE.UVMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping);
-    texture.wrapS = THREE.ClampToEdgeWrapping;
-    texture.wrapT = THREE.ClampToEdgeWrapping;
-    texture.repeat.set(1, 1);
-
     camera.position.z = 8;
 
-    var geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
-    var material = new THREE.MeshBasicMaterial({ transparent: true, map: texture, side: THREE.FrontSide });
-    var plane = new THREE.Mesh(geometry, material);
-    plane.position.z = 5;
-    scene.add(plane);
-
-
-
-    var Cocacola = null;//global model
-    var isAutoRotation = true;
-    var timer = null;
-    var touches = new TouchListener(renderer.domElement);
-    var touchStart = { x: 0, y: 0 };
-    var touchRotation = { x: 0, y: 0, z: 0 };
-
+    me.Cocacola = null;//global model
     var mtlLoader = new THREE.MTLLoader();
     mtlLoader.setPath('models/');
     mtlLoader.load('Cocacola.mtl', function (materials) {
@@ -58,69 +82,45 @@ export default class UI {
       objLoader.setMaterials(materials);
       objLoader.setPath('models/');
       objLoader.load('Cocacola.obj', function (obj) {
-        Cocacola = obj;
+        me.Cocacola = obj;
         scene.add(obj);
       }, function (xhr) { }, function (xhr) { });
     });
-
-    var animate = function () {
-      requestAnimationFrame(animate);
-
-      if (touches.list.length) {
-        isAutoRotation = false;
-        var current = touches.list[0];
-        Cocacola.rotation.x = touchRotation.x + (current.y - touchStart.y) * 0.03;
-        Cocacola.rotation.y = touchRotation.y + (current.x - touchStart.x) * 0.03;
-      }
-
-      if (Cocacola && isAutoRotation) {
-        Cocacola.rotation.x += 0.01;
-        Cocacola.rotation.y += 0.01;
-      }
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    canvas.addEventListener("touchstart", (evt) => {
-      var p = evt.changedTouches[0];
-      touchStart.x = p.clientX;
-      touchStart.y = p.clientY;
-      if (Cocacola) {
-        touchRotation.x = Cocacola.rotation.x;
-        touchRotation.y = Cocacola.rotation.y;
-        touchRotation.z = Cocacola.rotation.z;
-      }
-    });
-
-    canvas.addEventListener("touchend", (evt) => {
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(function () { isAutoRotation = true; }, 2000);
-    });
   }
-  render2d(canvas) {
-    var ctx = canvas.getContext("2d");
-    ctx.fillStyle = "color:red;";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    var img = new Image();
-    img.onload = (evt) => {
-      ctx.drawImage(img, 0, 0);
-    };
-    img.src = this.get2dImage();
+  update3d() {
+    var me = this;
+    if (me.touches.list.length) {
+      me.isAutoRotation = false;
+      var current = me.touches.list[0];
+      me.Cocacola.rotation.x = me.touchRotation.x + (current.y - me.touchStart.y) * 0.03;
+      me.Cocacola.rotation.y = me.touchRotation.y + (current.x - me.touchStart.x) * 0.03;
+    }
+
+    if (me.Cocacola && me.isAutoRotation) {
+      me.Cocacola.rotation.x += 0.01;
+      me.Cocacola.rotation.y += 0.01;
+    }
+    me.renderer.render(me.scene, me.camera);
   }
-  get2dImage() {
-    var canvas = wx.createCanvas();
-    canvas.width = 512;
-    canvas.height = 512;
-    var ctx = canvas.getContext("2d");
-    ctx.font = "32px arial";
+  init2d(canvas) {
+    var me = this;
+    me.ctx2d = canvas.getContext("2d");
+  }
+  update2d() {
+    var me = this;
+    var fontSize = 12;
+    var ctx = me.ctx2d;
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    ctx.font = "".concat(fontSize, "px arial");
     ctx.save();
-    ctx.fillStyle = "rgba(255,255,0,0.7)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    //ctx.fillStyle = "rgba(255,255,0,0.7)";
     ctx.fillStyle = "red";
-    ctx.fillText("hello", 0, 32);
+    ctx.fillText("now:".concat(Date.now()), 0, fontSize);
+    if (me.Cocacola) {
+      ctx.fillText("rotation.x:".concat(me.Cocacola.rotation.x), 0, fontSize * 2);
+      ctx.fillText("rotation.y:".concat(me.Cocacola.rotation.y), 0, fontSize * 3);
+      ctx.fillText("rotation.z:".concat(me.Cocacola.rotation.z), 0, fontSize * 4);
+    }
     ctx.restore();
-    //return canvas.toDataURL();
-    return canvas;
   }
 }
