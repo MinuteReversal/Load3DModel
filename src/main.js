@@ -76,3 +76,4 @@ export default class Main {
         });
     }
 }
+window.Main = Main;
