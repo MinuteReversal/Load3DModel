@@ -1,10 +1,6 @@
 var fs = require('fs');
 var path = require("path");
 var webpack = require("webpack");
-const babel = require("babel-core");
-const distPath = "dist/h5/";
-const fileName = "app.min.js";
-
 
 webpack({
     entry: [
@@ -23,7 +19,7 @@ webpack({
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        "presets": ["env"]
+                        presets: ['@babel/preset-env']
                     }
                 }
             }
